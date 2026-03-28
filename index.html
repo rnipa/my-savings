@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Savings v2.1 Fixed</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f766e">
+  <style>
+    :root{
+      --bg1:#f8fafc; --bg2:#eef7f5; --card:#ffffff; --text:#0f172a; --muted:#64748b;
+      --line:#e2e8f0; --primary:#0f766e; --primary2:#14b8a6; --danger:#dc2626;
+      --ok:#16a34a; --warn:#d97706; --shadow:0 10px 30px rgba(15,23,42,.08); --radius:22px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);background:linear-gradient(180deg,var(--bg1),var(--bg2))}
+    .wrap{max-width:1200px;margin:0 auto;padding:18px}
+    .topbar,.section-head,.actions{display:flex;gap:10px;flex-wrap:wrap}
+    .topbar,.section-head{justify-content:space-between;align-items:center}
+    h1{margin:0;font-size:32px}.sub{margin-top:6px;color:var(--muted)}
+    .grid{display:grid;gap:16px}
+    .stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .three{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .two{grid-template-columns:1.2fr .8fr}
+    .card{background:var(--card);border:1px solid rgba(226,232,240,.9);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+    .label{font-size:14px;color:var(--muted);margin-bottom:8px}.big{font-size:30px;font-weight:800}.mid{font-size:20px;font-weight:800}
+    .input{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line);font-size:16px;background:#fff}
+    button{border:none;background:var(--primary);color:#fff;padding:12px 16px;border-radius:16px;cursor:pointer;font-weight:700;box-shadow:var(--shadow);font-size:15px}
+    button.secondary{background:#fff;color:var(--text);border:1px solid var(--line);box-shadow:none}
+    button.danger{background:var(--danger)} button.warn{background:var(--warn)} button.ok{background:var(--ok)}
+    .progress{width:100%;height:12px;border-radius:999px;background:#e5e7eb;overflow:hidden;margin-top:10px}
+    .progress>span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--primary),var(--primary2));transition:width .25s ease}
+    .badge,.status-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;font-weight:700}
+    .badge{border:1px solid var(--line);background:#f8fafc}
+    .status-pill.pending{background:#fff7ed;color:#9a3412}
+    .status-pill.complete{background:#ecfdf5;color:#166534}
+    .status-pill.missed{background:#fef2f2;color:#991b1b}
+    .calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
+    .cal-item{border:1px solid var(--line);border-radius:16px;padding:10px;text-align:center;background:#fff;min-height:92px}
+    .cal-item.done{background:#ecfdf5;border-color:#86efac}.cal-item.missed{background:#fef2f2;border-color:#fca5a5}.cal-item.today{outline:2px solid #2dd4bf}
+    .money-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+    .money-box{display:flex;align-items:center;justify-content:center;min-height:62px;padding:16px 10px;border-radius:18px;border:1px solid var(--line);background:#fff;color:var(--text);font-size:18px;font-weight:800;text-align:center;cursor:pointer;transition:.18s transform,.18s background,.18s color,.18s border-color;user-select:none}
+    .money-box:hover{transform:translateY(-1px)} .money-box.done{background:var(--ok);color:#fff;border-color:var(--ok)}
+    .history-list{display:grid;gap:12px}
+    .entry{border:1px solid var(--line);background:#fff;border-radius:18px;padding:14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .entry-amount{font-size:24px;font-weight:800}.muted{color:var(--muted);font-size:14px}.entry-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .empty{border:1px dashed #cbd5e1;border-radius:18px;padding:26px;text-align:center;color:var(--muted)}
+    .modal-wrap{position:fixed;inset:0;background:rgba(15,23,42,.42);display:none;align-items:center;justify-content:center;padding:16px;z-index:9999}
+    .modal-wrap.show{display:flex}
+    .modal{width:min(100%,480px);background:#fff;border-radius:24px;padding:18px;border:1px solid var(--line);box-shadow:var(--shadow)}
+    .field{margin-bottom:12px}.field label{display:block;margin-bottom:6px;color:var(--muted);font-size:14px}
+    .chart-wrap{height:260px;display:flex;align-items:flex-end;gap:8px;padding-top:10px}
+    .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px}
+    .bar{width:100%;max-width:42px;border-radius:12px 12px 6px 6px;background:linear-gradient(180deg,var(--primary2),var(--primary));min-height:8px}
+    .bar-label,.bar-value{font-size:12px;color:var(--muted);text-align:center}
+    .hint{font-size:13px;color:var(--muted);margin-top:8px}
+    .footer-note{margin-top:16px;color:var(--muted);text-align:center;font-size:13px}
+    @media (max-width: 960px){.stats,.three,.two{grid-template-columns:1fr 1fr}.money-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+    @media (max-width: 560px){.stats,.three,.two{grid-template-columns:1fr}h1{font-size:28px}.calendar{grid-template-columns:repeat(4,minmax(0,1fr))}.money-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media print{body{background:#fff}.screen-only,.modal-wrap,.footer-note{display:none !important}.card{box-shadow:none;border:1px solid #d1d5db}.calendar{grid-template-columns:repeat(5,minmax(0,1fr))}.money-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar screen-only">
+    <div>
+      <h1 id="appTitle">My Savings v2.1</h1>
+      <div class="sub" id="subTitle">Analytics + reminder-ready + grid + daily target + backup + PDF + PIN</div>
+    </div>
+    <div class="actions">
+      <button id="langBtn" class="secondary">বাংলা / English</button>
+      <button id="openEntryBtn">New Entry</button>
+    </div>
+  </div>
+
+  <div class="grid stats">
+    <div class="card"><div class="label" id="targetLabel">Total Target</div><input id="targetInput" class="input" inputmode="numeric"></div>
+    <div class="card"><div class="label" id="daysLabel">Total Days</div><input id="daysInput" class="input" inputmode="numeric"></div>
+    <div class="card"><div class="label" id="savedLabel">Total Saved</div><div class="big" id="totalSaved">৳ 0</div></div>
+    <div class="card"><div class="label" id="remainingLabel">Remaining</div><div class="big" id="remaining">৳ 0</div></div>
+  </div>
+
+  <div class="grid two" style="margin-top:16px">
+    <div class="card">
+      <div class="section-head">
+        <div>
+          <div class="label" id="todayLabel">Today's Target</div>
+          <div class="big" id="todayTarget">৳ 0</div>
+        </div>
+        <div id="todayStatus" class="status-pill pending">Pending</div>
+      </div>
+      <div class="muted" id="todayInfo">Today's target amount will appear here.</div>
+      <div class="actions screen-only" style="margin-top:14px">
+        <button id="markMissedBtn" class="warn">Mark Missed</button>
+        <button id="resetTodayBtn" class="secondary">Reset Today</button>
+        <button id="regenerateBtn" class="secondary">Regenerate Targets</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="label" id="progressLabel">Progress</div>
+      <div class="big" id="progressText">0%</div>
+      <div class="progress"><span id="progressBar"></span></div>
+      <div class="badge" style="margin-top:14px"><span id="streakLabel">Streak</span>: <span id="streakValue">0</span></div>
+    </div>
+  </div>
+
+  <div class="grid three" style="margin-top:16px">
+    <div class="card screen-only">
+      <div class="section-head"><div class="mid" id="backupTitle">Backup / Export</div></div>
+      <div class="actions">
+        <button id="exportBtn" class="ok">Export JSON</button>
+        <button id="importBtn" class="secondary">Import Backup</button>
+        <button id="pdfBtn">Print / Save PDF</button>
+        <input id="importFileInput" type="file" accept=".json" style="display:none">
+      </div>
+      <div class="hint" id="backupHint">You can save your data as a JSON file.</div>
+    </div>
+
+    <div class="card screen-only">
+      <div class="section-head"><div class="mid" id="reminderTitle">Daily Reminder</div></div>
+      <div class="field"><label id="reminderTimeLabel">Reminder Time</label><input id="reminderTime" class="input" type="time"></div>
+      <div class="actions">
+        <button id="enableReminderBtn" class="ok">Enable Reminder</button>
+        <button id="testReminderBtn" class="secondary">Test Reminder</button>
+      </div>
+      <div class="hint" id="reminderHint">Browser notification will show when allowed.</div>
+    </div>
+
+    <div class="card screen-only">
+      <div class="section-head"><div class="mid" id="securityTitle">PIN & Lock</div></div>
+      <div class="actions">
+        <button id="setPinBtn" class="secondary">Set PIN</button>
+        <button id="disablePinBtn" class="danger">Disable PIN</button>
+        <button id="lockNowBtn" class="warn">Lock Now</button>
+      </div>
+      <div class="hint" id="securityHint">PIN lock protects your app on this browser.</div>
+    </div>
+  </div>
+
+  <div class="grid three" style="margin-top:16px">
+    <div class="card">
+      <div class="label" id="monthSavedLabel">This Month Saved</div>
+      <div class="big" id="monthSaved">৳ 0</div>
+    </div>
+    <div class="card">
+      <div class="label" id="monthDaysLabel">Completed This Month</div>
+      <div class="big" id="monthCompleted">0</div>
+    </div>
+    <div class="card">
+      <div class="label" id="averageLabel">Daily Average</div>
+      <div class="big" id="dailyAverage">৳ 0</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="section-head">
+      <div class="mid" id="analyticsTitle">Monthly Analytics</div>
+      <div class="badge"><span id="topMonthLabel">Best Day</span>: <span id="bestDayText">-</span></div>
+    </div>
+    <div class="chart-wrap" id="chartWrap"></div>
+    <div class="hint" id="chartHint">This chart shows the last 7 days of savings.</div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="section-head">
+      <div class="mid" id="challengeTitle">Challenge Days</div>
+      <div class="badge"><span id="completedDaysLabel">Completed Days</span>: <span id="completedDays">0</span></div>
+    </div>
+    <div class="calendar" id="calendar"></div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="section-head">
+      <div class="mid" id="gridTitle">Savings Grid</div>
+      <div class="badge"><span id="gridMarkedLabel">Grid Marked Total</span>: <span id="gridMarkedTotal">৳ 0</span></div>
+    </div>
+    <div class="money-grid" id="moneyGrid"></div>
+    <div class="hint" id="gridHint">Tap a box to mark the amount you saved in your box.</div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="section-head"><div class="mid" id="historyTitle">Entry History</div></div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+
+  <div class="footer-note" id="footerNote">Single HTML file. Works offline. Saves data in your browser.</div>
+</div>
+
+<div id="entryModalWrap" class="modal-wrap">
+  <div class="modal">
+    <h3 id="entryModalTitle">New Entry</h3>
+    <div class="field"><label id="amountLabel">Amount</label><input id="amountInput" class="input" inputmode="numeric" placeholder="e.g. 500"></div>
+    <div class="field"><label id="dateLabel">Date</label><input id="dateInput" class="input" type="date"></div>
+    <div class="field"><label id="noteLabel">Note</label><input id="noteInput" class="input" placeholder="Optional note"></div>
+    <div class="actions"><button id="saveEntryBtn">Save</button><button id="closeEntryBtn" class="secondary">Close</button></div>
+  </div>
+</div>
+
+<div id="pinModalWrap" class="modal-wrap">
+  <div class="modal">
+    <h3 id="pinModalTitle">Set PIN</h3>
+    <div class="field"><label id="pin1Label">New PIN</label><input id="pin1Input" class="input" inputmode="numeric" maxlength="8"></div>
+    <div class="field"><label id="pin2Label">Confirm PIN</label><input id="pin2Input" class="input" inputmode="numeric" maxlength="8"></div>
+    <div class="actions"><button id="savePinBtn">Save PIN</button><button id="closePinBtn" class="secondary">Close</button></div>
+    <div class="hint" id="pinModalError"></div>
+  </div>
+</div>
+
+<div id="pinUnlockWrap" class="modal-wrap">
+  <div class="modal">
+    <h3 id="unlockTitle">Unlock App</h3>
+    <div class="field"><label id="unlockLabel">PIN</label><input id="unlockPinInput" class="input" inputmode="numeric" maxlength="8"></div>
+    <div class="actions"><button id="unlockBtn">Unlock</button></div>
+    <div class="hint" id="unlockError"></div>
+  </div>
+</div>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  });
+}
+document.addEventListener("DOMContentLoaded", () => {
+  const STORAGE_KEY = "my_savings_v2_fixed";
+  const PIN_KEY = "my_savings_v2_fixed_pin";
+  const PIN_ENABLED_KEY = "my_savings_v2_fixed_pin_enabled";
+  const REMINDER_KEY = "my_savings_v2_fixed_reminder_time";
+
+  const bnDigits = {"0":"০","1":"১","2":"২","3":"৩","4":"৪","5":"৫","6":"৬","7":"৭","8":"৮","9":"৯"};
+  const enDigits = {"০":"0","১":"1","২":"2","৩":"3","৪":"4","৫":"5","৬":"6","৭":"7","৮":"8","৯":"9"};
+  const defaultGrid = [50,100,200,500,1000,100,50,200,500,1000,200,100,500,50,1000,200,100,500,1000,50,100,200,500,1000,200,100,50,500,1000,200,100,500,50,1000,200,100,500,1000,50,200,100,500,1000,200,50,100,500,1000,200,100,50,500,1000,200,100,500,50,1000,200,100];
+
+  const words = {
+    en: {
+      appTitle:"My Savings v2.1",
+      subTitle:"Analytics + reminder-ready + grid + daily target + backup + PDF + PIN",
+      target:"Total Target", days:"Total Days", saved:"Total Saved", remaining:"Remaining", today:"Today's Target",
+      progress:"Progress", streak:"Streak", challenge:"Challenge Days", completedDays:"Completed Days", history:"Entry History",
+      grid:"Savings Grid", gridMarked:"Grid Marked Total", addEntry:"New Entry", amount:"Amount", date:"Date", note:"Note",
+      save:"Save", close:"Close", edit:"Edit", del:"Delete", markMissed:"Mark Missed", reset:"Reset Today", regen:"Regenerate Targets",
+      pending:"Pending", complete:"Complete", missed:"Missed", noHistory:"No entries yet", backup:"Backup / Export",
+      reminder:"Daily Reminder", reminderTime:"Reminder Time", enableReminder:"Enable Reminder", testReminder:"Test Reminder",
+      reminderHint:"Browser notification will show when allowed.", security:"PIN & Lock", securityHint:"PIN lock protects your app on this browser.",
+      setPin:"Set PIN", disablePin:"Disable PIN", lockNow:"Lock Now", analytics:"Monthly Analytics", chartHint:"This chart shows the last 7 days of savings.",
+      monthSaved:"This Month Saved", monthDays:"Completed This Month", average:"Daily Average", bestDay:"Best Day", gridHint:"Tap a box to mark the amount you saved in your box.",
+      exported:"Backup exported", imported:"Backup imported", importFailed:"Invalid backup file", pinSaved:"PIN saved", pinDisabled:"PIN disabled",
+      pinTooShort:"PIN must be 4-8 digits", pinMismatch:"PINs do not match", wrongPin:"Wrong PIN", reminderEnabled:"Reminder saved",
+      notifDenied:"Notification permission denied", notifNotSupported:"Notification not supported",
+      footer:"Single HTML file. Works offline. Saves data in your browser.",
+      todaySaved:"Saved today"
+    },
+    bn: {
+      appTitle:"মাই সেভিংস v2.1",
+      subTitle:"অ্যানালিটিক্স + রিমাইন্ডার + গ্রিড + ডেইলি টার্গেট + ব্যাকআপ + পিডিএফ + পিন",
+      target:"মোট টার্গেট", days:"মোট দিন", saved:"মোট জমা", remaining:"বাকি আছে", today:"আজকের টার্গেট",
+      progress:"অগ্রগতি", streak:"স্ট্রিক", challenge:"চ্যালেঞ্জ দিনসমূহ", completedDays:"কমপ্লিট দিন", history:"এন্ট্রি হিস্টোরি",
+      grid:"সেভিংস গ্রিড", gridMarked:"গ্রিড মার্কড মোট", addEntry:"নতুন এন্ট্রি", amount:"টাকার পরিমাণ", date:"তারিখ", note:"নোট",
+      save:"সেভ করুন", close:"বন্ধ", edit:"এডিট", del:"ডিলিট", markMissed:"আজ Missed", reset:"আজ Reset", regen:"টার্গেট নতুন করে বানাও",
+      pending:"Pending", complete:"Complete", missed:"Missed", noHistory:"এখনও কোনো এন্ট্রি নেই", backup:"ব্যাকআপ / এক্সপোর্ট",
+      reminder:"ডেইলি রিমাইন্ডার", reminderTime:"রিমাইন্ডার সময়", enableReminder:"রিমাইন্ডার চালু", testReminder:"টেস্ট রিমাইন্ডার",
+      reminderHint:"অনুমতি দিলে ব্রাউজার নোটিফিকেশন দেখাবে।", security:"পিন ও লক", securityHint:"এই ব্রাউজারে পিন লক আপনার অ্যাপ সুরক্ষিত রাখে।",
+      setPin:"পিন সেট করুন", disablePin:"পিন বন্ধ করুন", lockNow:"এখনই লক", analytics:"মাসিক অ্যানালিটিক্স", chartHint:"এই চার্টে শেষ ৭ দিনের সেভিংস দেখা যায়।",
+      monthSaved:"এই মাসে জমা", monthDays:"এই মাসে কমপ্লিট", average:"দৈনিক গড়", bestDay:"সেরা দিন", gridHint:"যে amount বক্সে জমা দিয়েছেন, সেটা ট্যাপ করে mark করুন।",
+      exported:"ব্যাকআপ এক্সপোর্ট হয়েছে", imported:"ব্যাকআপ ইমপোর্ট হয়েছে", importFailed:"ব্যাকআপ ফাইল ঠিক নয়", pinSaved:"পিন সেভ হয়েছে", pinDisabled:"পিন বন্ধ করা হয়েছে",
+      pinTooShort:"পিন ৪ থেকে ৮ সংখ্যার হতে হবে", pinMismatch:"দুই পিন একই নয়", wrongPin:"ভুল পিন", reminderEnabled:"রিমাইন্ডার সেভ হয়েছে",
+      notifDenied:"নোটিফিকেশন পারমিশন মেলেনি", notifNotSupported:"নোটিফিকেশন সাপোর্টেড নয়",
+      footer:"একটি HTML ফাইল। অফলাইনে কাজ করে। ডেটা আপনার ব্রাউজারে সেভ থাকে।",
+      todaySaved:"আজ জমা"
+    }
+  };
+
+  let state = {
+    language: "bn",
+    totalTarget: 50000,
+    totalDays: 90,
+    challengeStartDate: todayStr(),
+    entries: [],
+    dailyTargets: [],
+    grid: defaultGrid.map((amount, idx) => ({ id: idx + 1, amount, done: false })),
+    editingId: null
+  };
+
+  const $ = id => document.getElementById(id);
+  function todayStr(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+  function normalizeDigits(val){ return String(val || "").replace(/[০-৯]/g, d => enDigits[d] || d); }
+  function toBangla(val){ return String(val).replace(/[0-9]/g, d => bnDigits[d]); }
+  function fmt(num, lang){ const f = new Intl.NumberFormat("en-IN").format(Number(num || 0)); return lang === "bn" ? toBangla(f) : f; }
+  function addDays(dateStr, plus){ const d = new Date(dateStr + "T00:00:00"); d.setDate(d.getDate() + plus); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+  function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+  function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        const parsed = JSON.parse(raw);
+        state = {...state, ...parsed};
+      }
+    }catch(e){}
+    if(!Array.isArray(state.entries)) state.entries=[];
+    if(!Array.isArray(state.grid)||!state.grid.length) state.grid=defaultGrid.map((amount, idx)=>({id:idx+1, amount, done:false}));
+    if(!Array.isArray(state.dailyTargets)||!state.dailyTargets.length) generateDailyTargets();
+  }
+  function totalSaved(){ return state.entries.reduce((s,x)=>s+Number(x.amount||0),0); }
+  function gridMarkedTotal(){ return state.grid.filter(x=>x.done).reduce((s,x)=>s+Number(x.amount||0),0); }
+  function getSavedForDate(date){ return state.entries.filter(e=>e.date===date).reduce((s,e)=>s+Number(e.amount||0),0); }
+  function getTodayDayObj(){ return state.dailyTargets.find(d=>d.date===todayStr())||null; }
+  function generateDailyTargets(){
+    const total=Number(state.totalTarget||0), days=Math.max(1, Number(state.totalDays||1)); let remaining=total; const arr=[];
+    state.challengeStartDate = todayStr();
+    for(let i=1;i<=days;i++){
+      const left=days-i+1; let amount;
+      if(left===1) amount=remaining;
+      else{
+        const avg=Math.max(10, Math.round(remaining/left));
+        const min=Math.max(10, Math.round(avg*0.5));
+        const max=Math.max(min, Math.round(avg*1.5));
+        amount=randInt(min,max);
+        if(amount>remaining-(left-1)*10) amount=Math.max(10, remaining-(left-1)*10);
+      }
+      remaining-=amount;
+      arr.push({dayNumber:i,target:amount,status:"pending",achieved:0,date:addDays(state.challengeStartDate,i-1)});
+    }
+    if(remaining!==0 && arr.length) arr[arr.length-1].target += remaining;
+    state.dailyTargets = arr;
+    updateStatusesFromEntries();
+    saveState();
+  }
+  function updateStatusesFromEntries(){
+    state.dailyTargets = state.dailyTargets.map(d=>{
+      const achieved=getSavedForDate(d.date);
+      let status=d.status==="missed"?"missed":"pending";
+      if(achieved>=d.target) status="complete";
+      else if(d.status!=="missed") status="pending";
+      return {...d, achieved, status};
+    });
+    saveState();
+  }
+  function completedDaysCount(){ return state.dailyTargets.filter(d=>d.status==="complete").length; }
+  function streakCount(){ let count=0; for(const d of state.dailyTargets){ if(d.status==="complete") count++; else break; } return count; }
+  function progressPercent(){ return !state.totalTarget ? 0 : Math.min((totalSaved()/state.totalTarget)*100,100); }
+  function escapeHtml(str){ return String(str).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"); }
+
+  function pinEnabled(){ return localStorage.getItem(PIN_ENABLED_KEY)==="1"; }
+  function currentPin(){ return localStorage.getItem(PIN_KEY)||""; }
+  function setPin(pin){ localStorage.setItem(PIN_KEY,pin); localStorage.setItem(PIN_ENABLED_KEY,"1"); }
+  function disablePin(){ localStorage.removeItem(PIN_KEY); localStorage.removeItem(PIN_ENABLED_KEY); }
+
+  function applyTexts(){
+    const L = words[state.language];
+    $("appTitle").textContent=L.appTitle;
+    $("subTitle").textContent=L.subTitle;
+    $("targetLabel").textContent=L.target; $("daysLabel").textContent=L.days; $("savedLabel").textContent=L.saved; $("remainingLabel").textContent=L.remaining;
+    $("todayLabel").textContent=L.today; $("progressLabel").textContent=L.progress; $("streakLabel").textContent=L.streak; $("challengeTitle").textContent=L.challenge;
+    $("completedDaysLabel").textContent=L.completedDays; $("historyTitle").textContent=L.history; $("gridTitle").textContent=L.grid; $("gridMarkedLabel").textContent=L.gridMarked;
+    $("openEntryBtn").textContent=L.addEntry; $("markMissedBtn").textContent=L.markMissed; $("resetTodayBtn").textContent=L.reset; $("regenerateBtn").textContent=L.regen;
+    $("backupTitle").textContent=L.backup; $("reminderTitle").textContent=L.reminder; $("reminderTimeLabel").textContent=L.reminderTime; $("enableReminderBtn").textContent=L.enableReminder; $("testReminderBtn").textContent=L.testReminder; $("reminderHint").textContent=L.reminderHint;
+    $("securityTitle").textContent=L.security; $("securityHint").textContent=L.securityHint; $("setPinBtn").textContent=L.setPin; $("disablePinBtn").textContent=L.disablePin; $("lockNowBtn").textContent=L.lockNow;
+    $("monthSavedLabel").textContent=L.monthSaved; $("monthDaysLabel").textContent=L.monthDays; $("averageLabel").textContent=L.average; $("analyticsTitle").textContent=L.analytics; $("topMonthLabel").textContent=L.bestDay; $("chartHint").textContent=L.chartHint; $("gridHint").textContent=L.gridHint;
+    $("entryModalTitle").textContent = state.editingId ? L.edit : L.addEntry; $("amountLabel").textContent=L.amount; $("dateLabel").textContent=L.date; $("noteLabel").textContent=L.note; $("saveEntryBtn").textContent=L.save; $("closeEntryBtn").textContent=L.close;
+    $("pinModalTitle").textContent=L.setPin; $("pin1Label").textContent=state.language==="bn"?"নতুন পিন":"New PIN"; $("pin2Label").textContent=state.language==="bn"?"পিন আবার লিখুন":"Confirm PIN"; $("savePinBtn").textContent=L.save; $("closePinBtn").textContent=L.close;
+    $("unlockTitle").textContent=state.language==="bn"?"অ্যাপ আনলক":"Unlock App"; $("unlockLabel").textContent="PIN"; $("unlockBtn").textContent=state.language==="bn"?"আনলক":"Unlock";
+    $("amountInput").placeholder = state.language==="bn" ? "যেমন 500 বা ৫০০" : "e.g. 500";
+    $("noteInput").placeholder = state.language==="bn" ? "ঐচ্ছিক নোট" : "Optional note";
+    $("footerNote").textContent = L.footer;
+  }
+
+  function renderStats(){
+    const saved=totalSaved(), remaining=Math.max(Number(state.totalTarget||0)-saved,0), p=progressPercent();
+    $("totalSaved").textContent="৳ "+fmt(saved,state.language);
+    $("remaining").textContent="৳ "+fmt(remaining,state.language);
+    $("targetInput").value=state.language==="bn"?toBangla(state.totalTarget):state.totalTarget;
+    $("daysInput").value=state.language==="bn"?toBangla(state.totalDays):state.totalDays;
+    $("progressText").textContent=(state.language==="bn"?toBangla(p.toFixed(1)):p.toFixed(1))+"%";
+    $("progressBar").style.width=p+"%";
+    $("streakValue").textContent=state.language==="bn"?toBangla(streakCount()):streakCount();
+    $("completedDays").textContent=state.language==="bn"?toBangla(completedDaysCount()):completedDaysCount();
+  }
+
+  function renderToday(){
+    updateStatusesFromEntries();
+    const d=getTodayDayObj(), L=words[state.language];
+    if(!d){
+      $("todayTarget").textContent="৳ 0";
+      $("todayStatus").textContent=L.pending;
+      $("todayStatus").className="status-pill pending";
+      $("todayInfo").textContent=L.today;
+      return;
+    }
+    $("todayTarget").textContent="৳ "+fmt(d.target,state.language);
+    $("todayStatus").textContent=L[d.status];
+    $("todayStatus").className="status-pill "+d.status;
+    $("todayInfo").textContent=`${L.today}: ৳ ${fmt(d.target,state.language)} | ${L.todaySaved}: ৳ ${fmt(d.achieved,state.language)}`;
+  }
+
+  function renderCalendar(){
+    const wrap=$("calendar"); wrap.innerHTML=""; const td=todayStr();
+    state.dailyTargets.forEach(d=>{
+      const div=document.createElement("div"); div.className="cal-item";
+      if(d.status==="complete") div.classList.add("done");
+      if(d.status==="missed") div.classList.add("missed");
+      if(d.date===td) div.classList.add("today");
+      div.innerHTML=`<div style="font-weight:800">${state.language==="bn"?"দিন":"Day"} ${state.language==="bn"?toBangla(d.dayNumber):d.dayNumber}</div><div class="muted" style="margin:6px 0">${d.date}</div><div style="font-weight:800">৳ ${fmt(d.target,state.language)}</div><div class="muted" style="margin-top:6px">${words[state.language][d.status]}</div>`;
+      wrap.appendChild(div);
+    });
+  }
+
+  function renderGrid(){
+    const wrap=$("moneyGrid"); wrap.innerHTML="";
+    $("gridMarkedTotal").textContent="৳ "+fmt(gridMarkedTotal(),state.language);
+    state.grid.forEach(item=>{
+      const btn=document.createElement("button");
+      btn.type="button";
+      btn.className="money-box"+(item.done?" done":"");
+      btn.innerHTML="<span>৳ "+fmt(item.amount,state.language)+"</span>";
+      btn.addEventListener("click",()=>{ item.done=!item.done; saveState(); renderGrid(); });
+      wrap.appendChild(btn);
+    });
+  }
+
+  function renderHistory(){
+    const wrap=$("historyList"), L=words[state.language]; wrap.innerHTML="";
+    if(!state.entries.length){ wrap.innerHTML=`<div class="empty">${L.noHistory}</div>`; return; }
+    state.entries.forEach(item=>{
+      const row=document.createElement("div"); row.className="entry";
+      row.innerHTML=`<div><div class="entry-amount">৳ ${fmt(item.amount,state.language)}</div><div class="muted">${item.date||""}</div>${item.note?`<div class="muted" style="margin-top:4px">${escapeHtml(item.note)}</div>`:""}</div><div class="entry-actions"><button class="secondary">${L.edit}</button><button class="danger">${L.del}</button></div>`;
+      const [editBtn, delBtn] = row.querySelectorAll("button");
+      editBtn.addEventListener("click",()=>openEntryModal(item));
+      delBtn.addEventListener("click",()=>{ state.entries=state.entries.filter(e=>e.id!==item.id); updateStatusesFromEntries(); saveState(); renderAll(); });
+      wrap.appendChild(row);
+    });
+  }
+
+  function renderAnalytics(){
+    const now=new Date(), year=now.getFullYear(), month=now.getMonth();
+    const thisMonthEntries = state.entries.filter(e=>{ const d=new Date(e.date+"T00:00:00"); return d.getFullYear()===year && d.getMonth()===month; });
+    const monthSaved = thisMonthEntries.reduce((s,e)=>s+Number(e.amount||0),0);
+    const completedMonth = state.dailyTargets.filter(d=>{ const x=new Date(d.date+"T00:00:00"); return x.getFullYear()===year && x.getMonth()===month && d.status==="complete"; }).length;
+    const uniqueDays = Math.max(1, new Set(thisMonthEntries.map(e=>e.date)).size);
+    const average = monthSaved / uniqueDays;
+
+    $("monthSaved").textContent = "৳ " + fmt(monthSaved, state.language);
+    $("monthCompleted").textContent = state.language==="bn" ? toBangla(completedMonth) : completedMonth;
+    $("dailyAverage").textContent = "৳ " + fmt(Math.round(average), state.language);
+
+    const chartWrap = $("chartWrap");
+    chartWrap.innerHTML = "";
+    const days = [];
+    let bestLabel = "-", bestValue = 0;
+    for(let i=6;i>=0;i--){
+      const d = new Date(); d.setDate(d.getDate()-i);
+      const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+      const val = getSavedForDate(ds);
+      days.push({label:String(d.getDate()).padStart(2,"0"), value:val});
+      if(val > bestValue){ bestValue=val; bestLabel=ds; }
+    }
+    $("bestDayText").textContent = bestValue ? `${bestLabel} • ৳ ${fmt(bestValue,state.language)}` : "-";
+    const max = Math.max(...days.map(x=>x.value), 1);
+    days.forEach(day=>{
+      const col = document.createElement("div");
+      col.className = "bar-col";
+      const h = Math.max(8, Math.round((day.value / max) * 180));
+      col.innerHTML = `<div class="bar-value">৳ ${fmt(day.value,state.language)}</div><div class="bar" style="height:${h}px"></div><div class="bar-label">${day.label}</div>`;
+      chartWrap.appendChild(col);
+    });
+  }
+
+  function renderAll(){ applyTexts(); renderStats(); renderToday(); renderCalendar(); renderGrid(); renderHistory(); renderAnalytics(); }
+  function openEntryModal(item=null){ state.editingId=item?item.id:null; applyTexts(); $("amountInput").value=item?item.amount:""; $("dateInput").value=item?item.date:todayStr(); $("noteInput").value=item?item.note:""; $("entryModalWrap").classList.add("show"); }
+  function closeEntryModal(){ state.editingId=null; $("amountInput").value=""; $("dateInput").value=todayStr(); $("noteInput").value=""; $("entryModalWrap").classList.remove("show"); }
+  function openPinModal(){ $("pin1Input").value=""; $("pin2Input").value=""; $("pinModalError").textContent=""; $("pinModalWrap").classList.add("show"); }
+  function closePinModal(){ $("pinModalWrap").classList.remove("show"); }
+  function showUnlock(){ $("pinUnlockWrap").classList.add("show"); }
+  function hideUnlock(){ $("pinUnlockWrap").classList.remove("show"); }
+
+  function exportBackup(){
+    const blob = new Blob([JSON.stringify({exportedAt:new Date().toISOString(), state}, null, 2)], {type:"application/json"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=`my-savings-v2-fixed-${todayStr()}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    $("backupHint").textContent=words[state.language].exported;
+  }
+  function importBackup(file){
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      try{
+        const parsed = JSON.parse(reader.result);
+        if(!parsed || !parsed.state) throw new Error("bad");
+        state = {...state, ...parsed.state};
+        saveState();
+        renderAll();
+        $("backupHint").textContent=words[state.language].imported;
+      }catch(e){ $("backupHint").textContent=words[state.language].importFailed; }
+    };
+    reader.readAsText(file);
+  }
+
+  async function enableReminder(){
+    const L = words[state.language];
+    if(!("Notification" in window)){ $("reminderHint").textContent = L.notifNotSupported; return; }
+    const time = $("reminderTime").value;
+    if(time) localStorage.setItem(REMINDER_KEY, time);
+    const permission = await Notification.requestPermission();
+    if(permission !== "granted"){ $("reminderHint").textContent = L.notifDenied; return; }
+    $("reminderHint").textContent = L.reminderEnabled;
+    maybeShowReminder(true);
+  }
+
+  function maybeShowReminder(force=false){
+    if(!("Notification" in window) || Notification.permission!=="granted") return;
+    const time = localStorage.getItem(REMINDER_KEY);
+    if(!time) return;
+    const todayKey = "my_savings_v2_fixed_last_notified_" + todayStr();
+    const now = new Date();
+    const [h,m] = time.split(":").map(Number);
+    const due = new Date(); due.setHours(h||0, m||0, 0, 0);
+    const done = getTodayDayObj()?.status === "complete";
+    if(force || (!done && now >= due && localStorage.getItem(todayKey)!=="1")){
+      new Notification("My Savings Reminder", { body: done ? "Today target is already complete." : "Today's savings target is waiting for you." });
+      localStorage.setItem(todayKey,"1");
+    }
+  }
+
+  $("langBtn").addEventListener("click", ()=>{ state.language = state.language === "en" ? "bn" : "en"; saveState(); renderAll(); });
+  $("openEntryBtn").addEventListener("click", ()=>openEntryModal());
+  $("closeEntryBtn").addEventListener("click", closeEntryModal);
+  $("entryModalWrap").addEventListener("click", e=>{ if(e.target===$("entryModalWrap")) closeEntryModal(); });
+
+  function updateTargetFromInput(){
+    const val=Number(normalizeDigits($("targetInput").value).replace(/[^\d]/g,""));
+    state.totalTarget=val||0;
+    saveState();
+    renderAll();
+  }
+  function updateDaysFromInput(){
+    const val=Number(normalizeDigits($("daysInput").value).replace(/[^\d]/g,""));
+    state.totalDays=Math.max(1,val||1);
+    saveState();
+    renderAll();
+  }
+  $("targetInput").addEventListener("input", updateTargetFromInput);
+  $("targetInput").addEventListener("change", updateTargetFromInput);
+  $("daysInput").addEventListener("input", updateDaysFromInput);
+  $("daysInput").addEventListener("change", updateDaysFromInput);
+
+  $("saveEntryBtn").addEventListener("click", ()=>{
+    const amount=Number(normalizeDigits($("amountInput").value).replace(/[^\d]/g,""));
+    const date=$("dateInput").value||todayStr();
+    const note=$("noteInput").value.trim();
+    if(!amount||amount<=0){ $("amountInput").focus(); return; }
+    if(state.editingId) state.entries=state.entries.map(e=>e.id===state.editingId?{...e,amount,date,note}:e);
+    else state.entries.unshift({id:Date.now(), amount, date, note});
+    updateStatusesFromEntries(); saveState(); closeEntryModal(); renderAll(); maybeShowReminder();
+  });
+  $("markMissedBtn").addEventListener("click", ()=>{ const d=getTodayDayObj(); if(!d) return; d.status="missed"; saveState(); renderAll(); });
+  $("resetTodayBtn").addEventListener("click", ()=>{ const d=getTodayDayObj(); if(!d) return; d.status="pending"; updateStatusesFromEntries(); saveState(); renderAll(); });
+  $("regenerateBtn").addEventListener("click", ()=>{ generateDailyTargets(); renderAll(); });
+
+  $("exportBtn").addEventListener("click", exportBackup);
+  $("importBtn").addEventListener("click", ()=>$("importFileInput").click());
+  $("importFileInput").addEventListener("change", ()=>{ const file=$("importFileInput").files[0]; if(file) importBackup(file); $("importFileInput").value=""; });
+  $("pdfBtn").addEventListener("click", ()=>window.print());
+
+  $("enableReminderBtn").addEventListener("click", enableReminder);
+  $("testReminderBtn").addEventListener("click", ()=>maybeShowReminder(true));
+
+  $("setPinBtn").addEventListener("click", openPinModal);
+  $("disablePinBtn").addEventListener("click", ()=>{ disablePin(); $("securityHint").textContent=words[state.language].pinDisabled; });
+  $("lockNowBtn").addEventListener("click", ()=>{ if(pinEnabled()) showUnlock(); else openPinModal(); });
+
+  $("closePinBtn").addEventListener("click", closePinModal);
+  $("pinModalWrap").addEventListener("click", e=>{ if(e.target===$("pinModalWrap")) closePinModal(); });
+  $("savePinBtn").addEventListener("click", ()=>{
+    const a=normalizeDigits($("pin1Input").value).replace(/[^\d]/g,"");
+    const b=normalizeDigits($("pin2Input").value).replace(/[^\d]/g,"");
+    const L=words[state.language];
+    if(a.length<4||a.length>8){ $("pinModalError").textContent=L.pinTooShort; return; }
+    if(a!==b){ $("pinModalError").textContent=L.pinMismatch; return; }
+    setPin(a); $("pinModalError").textContent=L.pinSaved; setTimeout(closePinModal, 500);
+  });
+
+  $("unlockBtn").addEventListener("click", ()=>{
+    const pin=normalizeDigits($("unlockPinInput").value).replace(/[^\d]/g,"");
+    if(pin===currentPin()) hideUnlock(); else $("unlockError").textContent=words[state.language].wrongPin;
+  });
+
+  loadState();
+  $("dateInput").value = todayStr();
+  $("reminderTime").value = localStorage.getItem(REMINDER_KEY) || "20:00";
+  renderAll();
+  if(pinEnabled()) showUnlock();
+  maybeShowReminder();
+  setInterval(maybeShowReminder, 60000);
+});
+</script>
+</body>
+</html>
