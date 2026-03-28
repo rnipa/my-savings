@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Savings Clean</title>
+  <style>
+    :root{
+      --bg1:#f8fafc;
+      --bg2:#eef7f5;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --line:#e2e8f0;
+      --primary:#0f766e;
+      --primary2:#14b8a6;
+      --danger:#dc2626;
+      --ok:#16a34a;
+      --warn:#d97706;
+      --shadow:0 10px 30px rgba(15,23,42,.08);
+      --radius:22px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      background:linear-gradient(180deg,var(--bg1),var(--bg2));
+    }
+    .wrap{max-width:1180px;margin:0 auto;padding:18px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+    h1{margin:0;font-size:32px}
+    .sub{margin-top:6px;color:var(--muted)}
+    .row{display:grid;gap:16px}
+    .stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .two{grid-template-columns:1.2fr .8fr}
+    .three{grid-template-columns:1fr 1fr 1fr}
+    .card{
+      background:var(--card);
+      border:1px solid rgba(226,232,240,.9);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+    .label{font-size:14px;color:var(--muted);margin-bottom:8px}
+    .big{font-size:30px;font-weight:800}
+    .mid{font-size:20px;font-weight:800}
+    .input{
+      width:100%;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      font-size:16px;
+      background:#fff;
+    }
+    .actions{display:flex;gap:10px;flex-wrap:wrap}
+    button{
+      border:none;
+      background:var(--primary);
+      color:#fff;
+      padding:12px 16px;
+      border-radius:16px;
+      cursor:pointer;
+      font-weight:700;
+      box-shadow:var(--shadow);
+      font-size:15px;
+    }
+    button.secondary{background:#fff;color:var(--text);border:1px solid var(--line);box-shadow:none}
+    button.danger{background:var(--danger)}
+    button.warn{background:var(--warn)}
+    button.ok{background:var(--ok)}
+    .progress{
+      width:100%;
+      height:12px;
+      border-radius:999px;
+      background:#e5e7eb;
+      overflow:hidden;
+      margin-top:10px;
+    }
+    .progress > span{
+      display:block;height:100%;width:0;
+      background:linear-gradient(90deg,var(--primary),var(--primary2));
+      transition:width .25s ease;
+    }
+    .section-head{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px
+    }
+    .badge{
+      display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;
+      border:1px solid var(--line);background:#f8fafc;font-weight:700
+    }
+    .status-pill{padding:8px 12px;border-radius:999px;font-weight:800;display:inline-block}
+    .pending{background:#fff7ed;color:#9a3412}
+    .complete{background:#ecfdf5;color:#166534}
+    .missed{background:#fef2f2;color:#991b1b}
+    .history-list{display:grid;gap:12px}
+    .entry{
+      border:1px solid var(--line);background:#fff;border-radius:18px;padding:14px;
+      display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap
+    }
+    .entry-amount{font-size:24px;font-weight:800}
+    .muted{color:var(--muted);font-size:14px}
+    .entry-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
+    .cal-item{
+      border:1px solid var(--line);border-radius:16px;padding:10px;text-align:center;background:#fff;min-height:92px
+    }
+    .cal-item.done{background:#ecfdf5;border-color:#86efac}
+    .cal-item.missed{background:#fef2f2;border-color:#fca5a5}
+    .cal-item.today{outline:2px solid #2dd4bf}
+    .money-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+    .money-box{
+      display:flex;align-items:center;justify-content:center;
+      min-height:62px;padding:16px 10px;border-radius:18px;border:1px solid var(--line);
+      background:#fff;color:var(--text);font-size:18px;font-weight:800;text-align:center;
+      cursor:pointer;transition:.18s transform,.18s background,.18s color,.18s border-color;
+      user-select:none;
+    }
+    .money-box:hover{transform:translateY(-1px)}
+    .money-box.done{background:var(--ok);color:#fff;border-color:var(--ok)}
+    .empty{border:1px dashed #cbd5e1;border-radius:18px;padding:26px;text-align:center;color:var(--muted)}
+    .modal-wrap{
+      position:fixed;inset:0;background:rgba(15,23,42,.42);
+      display:none;align-items:center;justify-content:center;padding:16px;z-index:9999
+    }
+    .modal-wrap.show{display:flex}
+    .modal{
+      width:min(100%,480px);background:#fff;border-radius:24px;padding:18px;border:1px solid var(--line);box-shadow:var(--shadow)
+    }
+    .field{margin-bottom:12px}
+    .field label{display:block;margin-bottom:6px;color:var(--muted);font-size:14px}
+    .modal-actions{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+    .footer-note{margin-top:16px;color:var(--muted);text-align:center;font-size:13px}
+    .pin-screen{
+      min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px;
+      background:linear-gradient(180deg,#ecfeff,#f8fafc);
+    }
+    .pin-card{
+      width:min(100%,420px);background:#fff;border:1px solid var(--line);border-radius:28px;padding:24px;box-shadow:var(--shadow)
+    }
+    .pin-card h2{margin-top:0;margin-bottom:8px}
+    .hidden{display:none !important}
+    .hint-line{font-size:13px;color:var(--muted);margin-top:8px}
+    @media (max-width: 960px){
+      .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .two,.three{grid-template-columns:1fr}
+      .money-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+    }
+    @media (max-width: 560px){
+      .stats{grid-template-columns:1fr}
+      h1{font-size:28px}
+      .calendar{grid-template-columns:repeat(4,minmax(0,1fr))}
+      .money-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    @media print{
+      body{background:#fff}
+      .topbar,.footer-note,.screen-only,.modal-wrap,.pin-screen{display:none !important}
+      .wrap{max-width:100%;padding:0}
+      .card{box-shadow:none;border:1px solid #d1d5db;break-inside:avoid}
+      .calendar{grid-template-columns:repeat(5,minmax(0,1fr))}
+      .money-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
+    }
+  </style>
+</head>
+<body>
+  <div id="pinUnlockWrap" class="pin-screen hidden">
+    <div class="pin-card">
+      <h2>My Savings</h2>
+      <div class="muted" id="unlockText">Enter PIN to unlock app</div>
+      <input id="unlockPinInput" class="input" inputmode="numeric" maxlength="8" placeholder="PIN" style="margin-top:12px" />
+      <div class="modal-actions">
+        <button id="unlockBtn">Unlock</button>
+      </div>
+      <div class="hint-line" id="unlockError"></div>
+    </div>
+  </div>
+
+  <div id="appWrap">
+    <div class="wrap">
+      <div class="topbar screen-only">
+        <div>
+          <h1>My Savings Clean</h1>
+          <div class="sub">Grid + daily target + backup + PDF + PIN lock</div>
+        </div>
+        <div class="actions">
+          <button id="langBtn" class="secondary">বাংলা / English</button>
+          <button id="openEntryBtn">New Entry</button>
+        </div>
+      </div>
+
+      <div class="row stats">
+        <div class="card">
+          <div class="label" id="targetLabel">Total Target</div>
+          <input id="targetInput" class="input" inputmode="numeric" />
+        </div>
+        <div class="card">
+          <div class="label" id="daysLabel">Total Days</div>
+          <input id="daysInput" class="input" inputmode="numeric" />
+        </div>
+        <div class="card">
+          <div class="label" id="savedLabel">Total Saved</div>
+          <div class="big" id="totalSaved">৳ 0</div>
+        </div>
+        <div class="card">
+          <div class="label" id="remainingLabel">Remaining</div>
+          <div class="big" id="remaining">৳ 0</div>
+        </div>
+      </div>
+
+      <div class="row two" style="margin-top:16px">
+        <div class="card">
+          <div class="section-head">
+            <div>
+              <div class="label" id="todayLabel">Today's Target</div>
+              <div class="big" id="todayTarget">৳ 0</div>
+            </div>
+            <div id="todayStatus" class="status-pill pending">Pending</div>
+          </div>
+          <div class="muted" id="todayInfo">Today's target amount will appear here.</div>
+          <div style="margin-top:14px" class="actions screen-only">
+            <button id="markMissedBtn" class="warn">Mark Missed</button>
+            <button id="resetTodayBtn" class="secondary">Reset Today</button>
+            <button id="regenerateBtn" class="secondary">Regenerate Targets</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="label" id="progressLabel">Progress</div>
+          <div class="mid" id="progressText">0%</div>
+          <div class="progress"><span id="progressBar"></span></div>
+          <div style="margin-top:14px" class="badge"><span id="streakLabel">Streak</span>: <span id="streakValue">0</span></div>
+        </div>
+      </div>
+
+      <div class="row three" style="margin-top:16px">
+        <div class="card screen-only">
+          <div class="section-head"><div class="mid" id="backupTitle">Backup / Export</div></div>
+          <div class="actions">
+            <button id="exportBtn" class="ok">Export JSON</button>
+            <button id="importBtn" class="secondary">Import Backup</button>
+            <input id="importFileInput" type="file" accept=".json" class="hidden" />
+          </div>
+          <div class="hint-line" id="backupHint">You can save your data as a JSON file.</div>
+        </div>
+
+        <div class="card screen-only">
+          <div class="section-head"><div class="mid" id="reportTitle">PDF Report</div></div>
+          <div class="actions">
+            <button id="pdfBtn">Print / Save PDF</button>
+          </div>
+          <div class="hint-line" id="reportHint">Use browser print here to save as PDF.</div>
+        </div>
+
+        <div class="card screen-only">
+          <div class="section-head"><div class="mid" id="securityTitle">Security</div></div>
+          <div class="actions">
+            <button id="setPinBtn" class="secondary">Set PIN</button>
+            <button id="changePinBtn" class="secondary">Change PIN</button>
+            <button id="disablePinBtn" class="danger">Disable PIN</button>
+            <button id="lockNowBtn" class="warn">Lock Now</button>
+          </div>
+          <div class="hint-line" id="securityHint">If PIN lock is enabled, app will ask for PIN before opening.</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="section-head">
+          <div class="mid" id="challengeTitle">Challenge Days</div>
+          <div class="badge"><span id="completedDaysLabel">Completed Days</span>: <span id="completedDays">0</span></div>
+        </div>
+        <div class="calendar" id="calendar"></div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="section-head">
+          <div class="mid" id="gridTitle">Savings Grid</div>
+          <div class="badge"><span id="gridMarkedLabel">Grid Marked Total</span>: <span id="gridMarkedTotal">৳ 0</span></div>
+        </div>
+        <div class="money-grid" id="moneyGrid"></div>
+        <div class="hint-line" id="gridHint">Tap a box to mark the amount you saved in your box.</div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="section-head"><div class="mid" id="historyTitle">Entry History</div></div>
+        <div class="history-list" id="historyList"></div>
+      </div>
+
+      <div class="footer-note">Single HTML file. Data is stored in your browser local storage.</div>
+    </div>
+  </div>
+
+  <div id="entryModalWrap" class="modal-wrap">
+    <div class="modal">
+      <h3 id="entryModalTitle">New Entry</h3>
+      <div class="field">
+        <label id="amountLabel">Amount</label>
+        <input id="amountInput" class="input" inputmode="numeric" placeholder="e.g. 500" />
+      </div>
+      <div class="field">
+        <label id="dateLabel">Date</label>
+        <input id="dateInput" class="input" type="date" />
+      </div>
+      <div class="field">
+        <label id="noteLabel">Note</label>
+        <input id="noteInput" class="input" placeholder="Optional note" />
+      </div>
+      <div class="modal-actions">
+        <button id="saveEntryBtn">Save</button>
+        <button id="closeEntryBtn" class="secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="pinModalWrap" class="modal-wrap">
+    <div class="modal">
+      <h3 id="pinModalTitle">Set PIN</h3>
+      <div class="field">
+        <label id="pin1Label">New PIN</label>
+        <input id="pin1Input" class="input" inputmode="numeric" maxlength="8" />
+      </div>
+      <div class="field">
+        <label id="pin2Label">Confirm PIN</label>
+        <input id="pin2Input" class="input" inputmode="numeric" maxlength="8" />
+      </div>
+      <div class="modal-actions">
+        <button id="savePinBtn">Save PIN</button>
+        <button id="closePinBtn" class="secondary">Close</button>
+      </div>
+      <div class="hint-line" id="pinModalError"></div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const STORAGE_KEY = "my_savings_clean_v1";
+      const PIN_KEY = "my_savings_clean_pin";
+      const PIN_ENABLED_KEY = "my_savings_clean_pin_enabled";
+      const bnDigits = {"0":"০","1":"১","2":"২","3":"৩","4":"৪","5":"৫","6":"৬","7":"৭","8":"৮","9":"৯"};
+      const enDigits = {"০":"0","১":"1","২":"2","৩":"3","৪":"4","৫":"5","৬":"6","৭":"7","৮":"8","৯":"9"};
+      const defaultGrid = [
+        50,100,200,500,1000,100,50,200,500,1000,
+        200,100,500,50,1000,200,100,500,1000,50,
+        100,200,500,1000,200,100,50,500,1000,200,
+        100,500,50,1000,200,100,500,1000,50,200,
+        100,500,1000,200,50,100,500,1000,200,100,
+        50,500,1000,200,100,500,50,1000,200,100
+      ];
+
+      const words = {
+        en: {
+          target:"Total Target", days:"Total Days", saved:"Total Saved", remaining:"Remaining",
+          today:"Today's Target", progress:"Progress", streak:"Streak", challenge:"Challenge Days",
+          completed:"Completed Days", history:"Entry History", grid:"Savings Grid", gridMarked:"Grid Marked Total",
+          addEntry:"New Entry", amount:"Amount", date:"Date", note:"Note", save:"Save", close:"Close",
+          edit:"Edit", del:"Delete", markMissed:"Mark Missed", reset:"Reset Today", regen:"Regenerate Targets",
+          pending:"Pending", complete:"Complete", missed:"Missed", noHistory:"No entries yet",
+          backup:"Backup / Export", report:"PDF Report", security:"Security",
+          backupHint:"You can save your data as a JSON file.", reportHint:"Use browser print here to save as PDF.",
+          securityHint:"If PIN lock is enabled, app will ask for PIN before opening.",
+          setPin:"Set PIN", changePin:"Change PIN", disablePin:"Disable PIN", lockNow:"Lock Now",
+          unlockText:"Enter PIN to unlock app", wrongPin:"Wrong PIN", pinTooShort:"PIN must be 4-8 digits",
+          pinMismatch:"PINs do not match", pinSaved:"PIN saved", pinChanged:"PIN changed", pinDisabled:"PIN disabled",
+          exported:"Backup exported", imported:"Backup imported", importFailed:"Invalid backup file",
+          subtitle:"Grid + daily target + backup + PDF + PIN lock", targetForDay:"Target", totalForDay:"Saved today",
+          gridHint:"Tap a box to mark the amount you saved in your box."
+        },
+        bn: {
+          target:"মোট টার্গেট", days:"মোট দিন", saved:"মোট জমা", remaining:"বাকি আছে",
+          today:"আজকের টার্গেট", progress:"অগ্রগতি", streak:"স্ট্রিক", challenge:"চ্যালেঞ্জ দিনসমূহ",
+          completed:"কমপ্লিট দিন", history:"এন্ট্রি হিস্টোরি", grid:"সেভিংস গ্রিড", gridMarked:"গ্রিড মার্কড মোট",
+          addEntry:"নতুন এন্ট্রি", amount:"টাকার পরিমাণ", date:"তারিখ", note:"নোট", save:"সেভ করুন", close:"বন্ধ",
+          edit:"এডিট", del:"ডিলিট", markMissed:"আজ Missed", reset:"আজ Reset", regen:"টার্গেট নতুন করে বানাও",
+          pending:"Pending", complete:"Complete", missed:"Missed", noHistory:"এখনও কোনো এন্ট্রি নেই",
+          backup:"Backup / Export", report:"PDF Report", security:"Security",
+          backupHint:"আপনার ডেটা JSON ফাইলে সেভ করতে পারবেন।", reportHint:"এখান থেকে browser print ব্যবহার করে PDF save করুন।",
+          securityHint:"PIN lock চালু থাকলে অ্যাপ খোলার আগে PIN চাইবে।",
+          setPin:"Set PIN", changePin:"Change PIN", disablePin:"Disable PIN", lockNow:"Lock Now",
+          unlockText:"PIN দিয়ে অ্যাপ খুলুন", wrongPin:"ভুল PIN", pinTooShort:"PIN 4-8 সংখ্যার হতে হবে",
+          pinMismatch:"দুই PIN একই নয়", pinSaved:"PIN সেভ হয়েছে", pinChanged:"PIN পরিবর্তন হয়েছে", pinDisabled:"PIN বন্ধ করা হয়েছে",
+          exported:"Backup export হয়েছে", imported:"Backup import হয়েছে", importFailed:"Backup file ঠিক নয়",
+          subtitle:"গ্রিড + ডেইলি টার্গেট + ব্যাকআপ + PDF + PIN lock", targetForDay:"আজকের লক্ষ্য", totalForDay:"আজ জমা",
+          gridHint:"যে amount বক্সে জমা দিয়েছেন, সেটা ট্যাপ করে mark করুন।"
+        }
+      };
+
+      const byId = id => document.getElementById(id);
+      const todayStr = () => {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const da = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${da}`;
+      };
+      const normalizeDigits = val => String(val || "").replace(/[০-৯]/g, d => enDigits[d] || d);
+      const toBangla = val => String(val).replace(/[0-9]/g, d => bnDigits[d]);
+      const fmt = (num, lang) => {
+        const f = new Intl.NumberFormat("en-IN").format(Number(num || 0));
+        return lang === "bn" ? toBangla(f) : f;
+      };
+      const addDays = (dateStr, plus) => {
+        const d = new Date(dateStr + "T00:00:00");
+        d.setDate(d.getDate() + plus);
+        const y = d.getFullYear();
+        const m = String(d.getMonth()+1).padStart(2,"0");
+        const da = String(d.getDate()).padStart(2,"0");
+        return `${y}-${m}-${da}`;
+      };
+      const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+      let state = {
+        language: "en",
+        totalTarget: 50000,
+        totalDays: 30,
+        challengeStartDate: todayStr(),
+        entries: [],
+        dailyTargets: [],
+        grid: defaultGrid.map((amount, idx) => ({ id: idx + 1, amount, done: false })),
+        editingId: null
+      };
+
+      function saveState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) state = { ...state, ...JSON.parse(raw) };
+        } catch (e) {}
+        if (!Array.isArray(state.entries)) state.entries = [];
+        if (!Array.isArray(state.grid) || !state.grid.length) {
+          state.grid = defaultGrid.map((amount, idx) => ({ id: idx + 1, amount, done: false }));
+        }
+        if (!Array.isArray(state.dailyTargets) || !state.dailyTargets.length) generateDailyTargets();
+      }
+      function totalSaved() {
+        return state.entries.reduce((s, x) => s + Number(x.amount || 0), 0);
+      }
+      function gridMarkedTotal() {
+        return state.grid.filter(x => x.done).reduce((s, x) => s + Number(x.amount || 0), 0);
+      }
+      function getSavedForDate(date) {
+        return state.entries.filter(e => e.date === date).reduce((s, e) => s + Number(e.amount || 0), 0);
+      }
+      function getTodayDayObj() {
+        return state.dailyTargets.find(d => d.date === todayStr()) || null;
+      }
+      function generateDailyTargets() {
+        const total = Number(state.totalTarget || 0);
+        const days = Math.max(1, Number(state.totalDays || 1));
+        let remaining = total;
+        const arr = [];
+        for (let i = 1; i <= days; i++) {
+          const left = days - i + 1;
+          let amount;
+          if (left === 1) {
+            amount = remaining;
+          } else {
+            const avg = Math.max(10, Math.round(remaining / left));
+            const min = Math.max(10, Math.round(avg * 0.5));
+            const max = Math.max(min, Math.round(avg * 1.5));
+            amount = randInt(min, max);
+            if (amount > remaining - (left - 1) * 10) {
+              amount = Math.max(10, remaining - (left - 1) * 10);
+            }
+          }
+          remaining -= amount;
+          arr.push({
+            dayNumber: i,
+            target: amount,
+            status: "pending",
+            achieved: 0,
+            date: addDays(state.challengeStartDate, i - 1)
+          });
+        }
+        if (remaining !== 0 && arr.length) arr[arr.length - 1].target += remaining;
+        state.dailyTargets = arr;
+        updateStatusesFromEntries();
+        saveState();
+      }
+      function updateStatusesFromEntries() {
+        state.dailyTargets = state.dailyTargets.map(d => {
+          const achieved = getSavedForDate(d.date);
+          let status = d.status === "missed" ? "missed" : "pending";
+          if (achieved >= d.target) status = "complete";
+          else if (d.status !== "missed") status = "pending";
+          return { ...d, achieved, status };
+        });
+        saveState();
+      }
+      function completedDaysCount() {
+        return state.dailyTargets.filter(d => d.status === "complete").length;
+      }
+      function streakCount() {
+        let count = 0;
+        for (const d of state.dailyTargets) {
+          if (d.status === "complete") count++;
+          else break;
+        }
+        return count;
+      }
+      function progressPercent() {
+        if (!state.totalTarget) return 0;
+        return Math.min((totalSaved() / state.totalTarget) * 100, 100);
+      }
+
+      function pinEnabled() { return localStorage.getItem(PIN_ENABLED_KEY) === "1"; }
+      function currentPin() { return localStorage.getItem(PIN_KEY) || ""; }
+      function setPin(pin) {
+        localStorage.setItem(PIN_KEY, pin);
+        localStorage.setItem(PIN_ENABLED_KEY, "1");
+      }
+      function disablePin() {
+        localStorage.removeItem(PIN_KEY);
+        localStorage.removeItem(PIN_ENABLED_KEY);
+      }
+      function showUnlock() {
+        byId("pinUnlockWrap").classList.remove("hidden");
+        byId("appWrap").classList.add("hidden");
+        byId("unlockPinInput").value = "";
+        byId("unlockError").textContent = "";
+      }
+      function showApp() {
+        byId("pinUnlockWrap").classList.add("hidden");
+        byId("appWrap").classList.remove("hidden");
+      }
+
+      function applyTexts() {
+        const L = words[state.language];
+        document.querySelector(".sub").textContent = L.subtitle;
+        byId("targetLabel").textContent = L.target;
+        byId("daysLabel").textContent = L.days;
+        byId("savedLabel").textContent = L.saved;
+        byId("remainingLabel").textContent = L.remaining;
+        byId("todayLabel").textContent = L.today;
+        byId("progressLabel").textContent = L.progress;
+        byId("streakLabel").textContent = L.streak;
+        byId("challengeTitle").textContent = L.challenge;
+        byId("completedDaysLabel").textContent = L.completed;
+        byId("historyTitle").textContent = L.history;
+        byId("gridTitle").textContent = L.grid;
+        byId("gridMarkedLabel").textContent = L.gridMarked;
+        byId("openEntryBtn").textContent = L.addEntry;
+        byId("markMissedBtn").textContent = L.markMissed;
+        byId("resetTodayBtn").textContent = L.reset;
+        byId("regenerateBtn").textContent = L.regen;
+        byId("backupTitle").textContent = L.backup;
+        byId("reportTitle").textContent = L.report;
+        byId("securityTitle").textContent = L.security;
+        byId("backupHint").textContent = L.backupHint;
+        byId("reportHint").textContent = L.reportHint;
+        byId("securityHint").textContent = L.securityHint;
+        byId("setPinBtn").textContent = L.setPin;
+        byId("changePinBtn").textContent = L.changePin;
+        byId("disablePinBtn").textContent = L.disablePin;
+        byId("lockNowBtn").textContent = L.lockNow;
+        byId("gridHint").textContent = L.gridHint;
+        byId("unlockText").textContent = L.unlockText;
+        byId("entryModalTitle").textContent = state.editingId ? L.edit : L.addEntry;
+        byId("amountLabel").textContent = L.amount;
+        byId("dateLabel").textContent = L.date;
+        byId("noteLabel").textContent = L.note;
+        byId("saveEntryBtn").textContent = L.save;
+        byId("closeEntryBtn").textContent = L.close;
+        byId("pinModalTitle").textContent = L.setPin;
+        byId("pin1Label").textContent = L.amount === "Amount" ? "New PIN" : "নতুন PIN";
+        byId("pin2Label").textContent = L.amount === "Amount" ? "Confirm PIN" : "PIN আবার লিখুন";
+        byId("savePinBtn").textContent = L.save;
+        byId("closePinBtn").textContent = L.close;
+        byId("amountInput").placeholder = state.language === "bn" ? "যেমন 500 বা ৫০০" : "e.g. 500";
+        byId("noteInput").placeholder = state.language === "bn" ? "ঐচ্ছিক নোট" : "Optional note";
+      }
+
+      function renderStats() {
+        const saved = totalSaved();
+        const remaining = Math.max(Number(state.totalTarget || 0) - saved, 0);
+        const p = progressPercent();
+        byId("totalSaved").textContent = "৳ " + fmt(saved, state.language);
+        byId("remaining").textContent = "৳ " + fmt(remaining, state.language);
+        byId("targetInput").value = state.language === "bn" ? toBangla(state.totalTarget) : state.totalTarget;
+        byId("daysInput").value = state.language === "bn" ? toBangla(state.totalDays) : state.totalDays;
+        byId("progressText").textContent = (state.language === "bn" ? toBangla(p.toFixed(1)) : p.toFixed(1)) + "%";
+        byId("progressBar").style.width = p + "%";
+        const streak = streakCount();
+        const done = completedDaysCount();
+        byId("streakValue").textContent = state.language === "bn" ? toBangla(streak) : streak;
+        byId("completedDays").textContent = state.language === "bn" ? toBangla(done) : done;
+      }
+
+      function renderToday() {
+        updateStatusesFromEntries();
+        const d = getTodayDayObj();
+        const L = words[state.language];
+        if (!d) {
+          byId("todayTarget").textContent = "৳ 0";
+          byId("todayStatus").textContent = L.pending;
+          byId("todayStatus").className = "status-pill pending";
+          byId("todayInfo").textContent = L.today;
+          return;
+        }
+        byId("todayTarget").textContent = "৳ " + fmt(d.target, state.language);
+        byId("todayStatus").textContent = L[d.status];
+        byId("todayStatus").className = "status-pill " + d.status;
+        byId("todayInfo").textContent =
+          `${L.targetForDay}: ৳ ${fmt(d.target, state.language)} | ${L.totalForDay}: ৳ ${fmt(d.achieved, state.language)}`;
+      }
+
+      function renderCalendar() {
+        const L = words[state.language];
+        const wrap = byId("calendar");
+        wrap.innerHTML = "";
+        const today = todayStr();
+        state.dailyTargets.forEach(d => {
+          const div = document.createElement("div");
+          div.className = "cal-item";
+          if (d.status === "complete") div.classList.add("done");
+          if (d.status === "missed") div.classList.add("missed");
+          if (d.date === today) div.classList.add("today");
+          div.innerHTML = `
+            <div style="font-weight:800">${L.challenge === "Challenge Days" ? "Day" : "দিন"} ${state.language === "bn" ? toBangla(d.dayNumber) : d.dayNumber}</div>
+            <div class="muted" style="margin:6px 0">${d.date}</div>
+            <div style="font-weight:800">৳ ${fmt(d.target, state.language)}</div>
+            <div class="muted" style="margin-top:6px">${L[d.status]}</div>
+          `;
+          wrap.appendChild(div);
+        });
+      }
+
+      function renderGrid() {
+        const wrap = byId("moneyGrid");
+        wrap.innerHTML = "";
+        byId("gridMarkedTotal").textContent = "৳ " + fmt(gridMarkedTotal(), state.language);
+        state.grid.forEach(item => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "money-box" + (item.done ? " done" : "");
+          btn.innerHTML = "<span>৳ " + fmt(item.amount, state.language) + "</span>";
+          btn.addEventListener("click", () => {
+            item.done = !item.done;
+            saveState();
+            renderGrid();
+          });
+          wrap.appendChild(btn);
+        });
+      }
+
+      function renderHistory() {
+        const wrap = byId("historyList");
+        const L = words[state.language];
+        wrap.innerHTML = "";
+        if (!state.entries.length) {
+          wrap.innerHTML = `<div class="empty">${L.noHistory}</div>`;
+          return;
+        }
+        state.entries.forEach(item => {
+          const row = document.createElement("div");
+          row.className = "entry";
+          row.innerHTML = `
+            <div>
+              <div class="entry-amount">৳ ${fmt(item.amount, state.language)}</div>
+              <div class="muted">${item.date || ""}</div>
+              ${item.note ? `<div class="muted" style="margin-top:4px">${escapeHtml(item.note)}</div>` : ""}
+            </div>
+            <div class="entry-actions">
+              <button class="secondary">${L.edit}</button>
+              <button class="danger">${L.del}</button>
+            </div>
+          `;
+          const [editBtn, delBtn] = row.querySelectorAll("button");
+          editBtn.addEventListener("click", () => openEntryModal(item));
+          delBtn.addEventListener("click", () => {
+            state.entries = state.entries.filter(e => e.id !== item.id);
+            updateStatusesFromEntries();
+            saveState();
+            renderAll();
+          });
+          wrap.appendChild(row);
+        });
+      }
+
+      function renderAll() {
+        applyTexts();
+        renderStats();
+        renderToday();
+        renderCalendar();
+        renderGrid();
+        renderHistory();
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replaceAll("&","&amp;")
+          .replaceAll("<","&lt;")
+          .replaceAll(">","&gt;")
+          .replaceAll('"',"&quot;")
+          .replaceAll("'","&#039;");
+      }
+
+      function openEntryModal(item = null) {
+        state.editingId = item ? item.id : null;
+        applyTexts();
+        byId("amountInput").value = item ? item.amount : "";
+        byId("dateInput").value = item ? item.date : todayStr();
+        byId("noteInput").value = item ? item.note : "";
+        byId("entryModalWrap").classList.add("show");
+      }
+      function closeEntryModal() {
+        state.editingId = null;
+        byId("amountInput").value = "";
+        byId("dateInput").value = todayStr();
+        byId("noteInput").value = "";
+        byId("entryModalWrap").classList.remove("show");
+      }
+      function openPinModal() {
+        byId("pin1Input").value = "";
+        byId("pin2Input").value = "";
+        byId("pinModalError").textContent = "";
+        byId("pinModalWrap").classList.add("show");
+      }
+      function closePinModal() {
+        byId("pinModalWrap").classList.remove("show");
+      }
+
+      function exportBackup() {
+        const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), state }, null, 2)], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `my-savings-clean-${todayStr()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        byId("backupHint").textContent = words[state.language].exported;
+      }
+
+      function importBackup(file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const parsed = JSON.parse(reader.result);
+            if (!parsed || !parsed.state) throw new Error("bad");
+            state = { ...state, ...parsed.state };
+            saveState();
+            renderAll();
+            byId("backupHint").textContent = words[state.language].imported;
+          } catch (e) {
+            byId("backupHint").textContent = words[state.language].importFailed;
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      byId("langBtn").addEventListener("click", () => {
+        state.language = state.language === "en" ? "bn" : "en";
+        saveState();
+        renderAll();
+      });
+
+      byId("openEntryBtn").addEventListener("click", () => openEntryModal());
+      byId("closeEntryBtn").addEventListener("click", closeEntryModal);
+      byId("entryModalWrap").addEventListener("click", e => {
+        if (e.target === byId("entryModalWrap")) closeEntryModal();
+      });
+
+      byId("targetInput").addEventListener("input", () => {
+        const val = Number(normalizeDigits(byId("targetInput").value).replace(/[^\d]/g, ""));
+        state.totalTarget = val || 0;
+        saveState();
+        renderStats();
+      });
+
+      byId("daysInput").addEventListener("input", () => {
+        const val = Number(normalizeDigits(byId("daysInput").value).replace(/[^\d]/g, ""));
+        state.totalDays = Math.max(1, val || 1);
+        saveState();
+        renderStats();
+      });
+
+      byId("saveEntryBtn").addEventListener("click", () => {
+        const amount = Number(normalizeDigits(byId("amountInput").value).replace(/[^\d]/g, ""));
+        const date = byId("dateInput").value || todayStr();
+        const note = byId("noteInput").value.trim();
+        if (!amount || amount <= 0) {
+          byId("amountInput").focus();
+          return;
+        }
+        if (state.editingId) {
+          state.entries = state.entries.map(e => e.id === state.editingId ? { ...e, amount, date, note } : e);
+        } else {
+          state.entries.unshift({ id: Date.now(), amount, date, note });
+        }
+        updateStatusesFromEntries();
+        saveState();
+        closeEntryModal();
+        renderAll();
+      });
+
+      byId("markMissedBtn").addEventListener("click", () => {
+        const d = getTodayDayObj();
+        if (!d) return;
+        d.status = "missed";
+        saveState();
+        renderAll();
+      });
+
+      byId("resetTodayBtn").addEventListener("click", () => {
+        const d = getTodayDayObj();
+        if (!d) return;
+        d.status = "pending";
+        updateStatusesFromEntries();
+        saveState();
+        renderAll();
+      });
+
+      byId("regenerateBtn").addEventListener("click", () => {
+        state.challengeStartDate = todayStr();
+        generateDailyTargets();
+        renderAll();
+      });
+
+      byId("exportBtn").addEventListener("click", exportBackup);
+      byId("importBtn").addEventListener("click", () => byId("importFileInput").click());
+      byId("importFileInput").addEventListener("change", () => {
+        const file = byId("importFileInput").files[0];
+        if (file) importBackup(file);
+        byId("importFileInput").value = "";
+      });
+
+      byId("pdfBtn").addEventListener("click", () => window.print());
+
+      byId("setPinBtn").addEventListener("click", openPinModal);
+      byId("changePinBtn").addEventListener("click", openPinModal);
+      byId("closePinBtn").addEventListener("click", closePinModal);
+      byId("pinModalWrap").addEventListener("click", e => {
+        if (e.target === byId("pinModalWrap")) closePinModal();
+      });
+
+      byId("savePinBtn").addEventListener("click", () => {
+        const a = normalizeDigits(byId("pin1Input").value).replace(/[^\d]/g, "");
+        const b = normalizeDigits(byId("pin2Input").value).replace(/[^\d]/g, "");
+        const L = words[state.language];
+        if (a.length < 4 || a.length > 8) {
+          byId("pinModalError").textContent = L.pinTooShort;
+          return;
+        }
+        if (a !== b) {
+          byId("pinModalError").textContent = L.pinMismatch;
+          return;
+        }
+        setPin(a);
+        byId("pinModalError").textContent = L.pinSaved;
+        setTimeout(closePinModal, 500);
+      });
+
+      byId("disablePinBtn").addEventListener("click", () => {
+        disablePin();
+        byId("securityHint").textContent = words[state.language].pinDisabled;
+      });
+
+      byId("lockNowBtn").addEventListener("click", () => {
+        if (pinEnabled()) showUnlock();
+        else openPinModal();
+      });
+
+      byId("unlockBtn").addEventListener("click", () => {
+        const pin = normalizeDigits(byId("unlockPinInput").value).replace(/[^\d]/g, "");
+        if (pin === currentPin()) showApp();
+        else byId("unlockError").textContent = words[state.language].wrongPin;
+      });
+
+      loadState();
+      byId("dateInput").value = todayStr();
+      renderAll();
+      if (pinEnabled()) showUnlock();
+      else showApp();
+    });
+  </script>
+</body>
+</html>
